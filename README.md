@@ -1,12 +1,12 @@
 
 ## Pre-trained Models
 
-|Backbone|# of Coarse Seage|Links|
+|Backbone|# of Coarse Seage|Checkpoints Links|Log Links|
 |-----|------|-----|-----|
-|DeiT-S| 7x7|[Google Drive]()|
-|DeiT-S| 9x9| [Google Drive]()|
-|LV-ViT-S| 7x7| [Google Drive]()|
-|LV-ViT-S| 9x9| [Google Drive]()|
+|DeiT-S| 7x7|[Google Drive](https://drive.google.com/file/d/1b8qU5lTP62Jr_YtEcj2lsJAWkVFZWDWL/view?usp=sharing)|[Google Drive](https://drive.google.com/file/d/1VUndAotIgBVrd9MguFwuw3vZh-rRm0Mj/view?usp=sharing)|
+|DeiT-S| 9x9| [Google Drive](https://drive.google.com/file/d/1m082crS9cWQEHOewnVrYTktXEgorLCNM/view?usp=sharing)|[Google Drive](https://drive.google.com/file/d/1ICZ9M3zgLv6_H3lABB8q_0FvGt3oOjXp/view?usp=sharing)|
+|LV-ViT-S| 7x7| [Google Drive](https://drive.google.com/file/d/1C2pjsLmG7OuiZwR-zy5HHgQIdnZsy8C3/view?usp=sharing)|[Google Drive](https://drive.google.com/file/d/1F-82NHjxG2OaMtJlPUAnoj2nKpgg7ZiP/view?usp=sharing)|
+|LV-ViT-S| 9x9| [Google Drive](https://drive.google.com/file/d/13BBDfWgJrC1_DU96gOVEXphdr1SIm_tH/view?usp=sharing)|[Google Drive](https://drive.google.com/file/d/1ccaf0mk_8zUT2WHdxYPiaG7GSZTGyMKE/view?usp=sharing)|
 
 - What are contained in the checkpoints:
 
