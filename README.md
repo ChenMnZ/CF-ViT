@@ -4,7 +4,7 @@ This a Pytorch implementation of our paper
 
 ## Pre-trained Models
 
-|Backbone|# of Coarse Seage|Accuracy($\eta=1$)|Checkpoints Links|Logs Links|
+|Backbone|# of Coarse Seage|Accuracy(threshold=1)|Checkpoints Links|Logs Links|
 |-----|------|-----|-----|-----|
 |DeiT-S| 7x7|80.8|[Google Drive](https://drive.google.com/file/d/1b8qU5lTP62Jr_YtEcj2lsJAWkVFZWDWL/view?usp=sharing)|[Google Drive](https://drive.google.com/file/d/1VUndAotIgBVrd9MguFwuw3vZh-rRm0Mj/view?usp=sharing)|
 |DeiT-S| 9x9|81.9| [Google Drive](https://drive.google.com/file/d/1m082crS9cWQEHOewnVrYTktXEgorLCNM/view?usp=sharing)|[Google Drive](https://drive.google.com/file/d/1ICZ9M3zgLv6_H3lABB8q_0FvGt3oOjXp/view?usp=sharing)|
