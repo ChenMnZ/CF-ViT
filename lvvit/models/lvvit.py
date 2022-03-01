@@ -93,8 +93,6 @@ class CF_LV_ViT(nn.Module):
         self.informative_selection = False
         self.alpha = 0.5
         self.beta_2 = 0.99
-        # self.beta_2 = 0.8
-        # self.target_index = [3,4,5,6,7,8,9,10,11,12,13,14,15]
         self.target_index = [3,4,5,6,7,8,9,10,11,12,13,14,15]
         self.patch_h = img_size_list[1]//patch_size
         self.patch_w = img_size_list[1]//patch_size
@@ -215,7 +213,7 @@ class CF_LV_ViT(nn.Module):
         if self.return_dense:
             x_aux = self.aux_head(x[:,1:])
             if not self.training:
-                results.append((x_cls+0.25*x_aux.max(1)[0])/1.25)
+                results.append((x_cls+0.25*x_aux.max(1)[0]))
             else:
                 # recover the mixed part
                 if self.mix_token and self.training:
@@ -244,7 +242,7 @@ class CF_LV_ViT(nn.Module):
         feature_temp = feature_temp.transpose(1, 2).reshape(B, C, int(np.sqrt(new_HW)), int(np.sqrt(new_HW)))
         feature_temp = torch.nn.functional.interpolate(feature_temp, (self.patch_h, self.patch_w), mode='nearest').view(B, C, x.size(1) - 1).transpose(1, 2)
         feature_temp = torch.cat((torch.zeros(B, 1, self.embed_dim).cuda(), feature_temp), dim=1)
-        x = x+feature_temp      # 直接shortcut
+        x = x+feature_temp
         x = x + self.pos_embed_list[1]
         embedding_fine = x
         x = self.pos_drop(x)
@@ -258,8 +256,7 @@ class CF_LV_ViT(nn.Module):
             if self.return_dense:
                 x_aux = self.aux_head(x[:,1:])
                 if not self.training:
-                    results.append(x_cls+0.5*x_aux.max(1)[0])
-                    # results.append(x_cls[0])
+                    results.append(x_cls+0.25*x_aux.max(1)[0])
                 else:
                     # recover the mixed part
                     if self.mix_token and self.training:
@@ -292,14 +289,9 @@ class CF_LV_ViT(nn.Module):
                 x_aux = self.aux_head(x[:,1:])
                 if not self.training:
                     results.append(x_cls+0.25*x_aux.max(1)[0])
-                    # pdb.set_trace()
-                    # results.append(0.5*x_aux.max(1)[0])
-
                 else:
                     # recover the mixed part
                     if self.mix_token and self.training:
-                        # 恢复成正方形,即不重要的区域复制成4份
-                        # x_temp = torch.zeros(B,196,self.num_classes, dtype=torch.float16).cuda()
                         x_temp = torch.zeros(B,self.num_patches_list[1],self.num_classes, dtype=x_aux.dtype).cuda()
 
                         idx = patch_important_index
@@ -307,7 +299,6 @@ class CF_LV_ViT(nn.Module):
                         offset = torch.arange(B, dtype=torch.long, device=x.device).view(B, 1) * N
                         idx = idx + offset
 
-                        # pdb.set_trace()
                         x_temp.view(B*N, C)[idx.reshape(-1)] =  x_aux[:,:(import_token_num*4)].reshape(-1,C)
 
 
@@ -325,11 +316,9 @@ class CF_LV_ViT(nn.Module):
                     results.append((x_cls, x_aux,(bbx1_1, bby1_1, bbx2_1, bby2_1)))
             else:
                 results.append(x_cls)
-        # pdb.set_trace()
         return results
 
     def forward_early_exit(self, xx, threshold):
-        # dynamic inference 
         self.first_stage_output = None
         x = self.forward_embeddings(xx[0])
 
@@ -349,7 +338,7 @@ class CF_LV_ViT(nn.Module):
         self.first_stage_output = x
         x_cls = self.head(x[:,0])
         x_aux = self.aux_head(x[:,1:])
-        coarse_result = x_cls+0.5*x_aux.max(1)[0]
+        coarse_result = (x_cls+0.25*x_aux.max(1)[0])/1.25
         logits_temp = F.softmax(coarse_result, 1)
         max_preds, _ = logits_temp.max(dim=1, keepdim=False)
         no_exit = max_preds < threshold
@@ -368,14 +357,14 @@ class CF_LV_ViT(nn.Module):
         feature_temp = feature_temp.transpose(1, 2).reshape(B, C, int(np.sqrt(new_HW)), int(np.sqrt(new_HW)))
         feature_temp = torch.nn.functional.interpolate(feature_temp, (self.patch_h, self.patch_w), mode='nearest').view(B, C, x.size(1) - 1).transpose(1, 2)
         feature_temp = torch.cat((torch.zeros(B, 1, self.embed_dim).cuda(), feature_temp), dim=1)
-        x = x+feature_temp      # 直接shortcut
+        x = x+feature_temp      
         x = x + self.pos_embed_list[1]
         embedding_fine = x
         x = self.pos_drop(x)
 
         
-        cls_attn = global_attention[no_exit].mean(dim=1)[:,0,1:] # 不计算cls_token本身
-        import_token_num = int(self.alpha * self.patch_embed.num_patches_list[0])
+        cls_attn = global_attention[no_exit].mean(dim=1)[:,0,1:] 
+        import_token_num = math.ceil(self.alpha * self.patch_embed.num_patches_list[0])
         policy_index = torch.argsort(cls_attn, dim=1, descending=True)
         patch_unimportan_index = policy_index[:, import_token_num:]
         important_index = policy_index[:, :import_token_num]
@@ -391,7 +380,7 @@ class CF_LV_ViT(nn.Module):
         x_cls = self.head(x[:,0])
 
         x_aux = self.aux_head(x[:,1:])
-        fine_result = x_cls+0.5*x_aux.max(1)[0]
+        fine_result = x_cls+0.25*x_aux.max(1)[0]
         coarse_result[no_exit] = fine_result
         return coarse_result
 

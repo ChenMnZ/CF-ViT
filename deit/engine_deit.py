@@ -16,6 +16,7 @@ from timm.utils import accuracy, ModelEma
 
 from deit.losses import DistillationLoss
 import utils
+import numpy as np
 
 
 def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
@@ -103,3 +104,6 @@ def evaluate(data_loader, model, device,input_size_list):
             .format(size=input_size, top1=metric_logger.meters[f'{input_size}_acc1'], top5=metric_logger.meters[f'{input_size}_acc5']))
 
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+
+
+

@@ -228,7 +228,6 @@ class CFVisionTransformer(nn.Module):
         embedding_x2 = x + self.pos_embed_list[1]
         if self.informative_selection:
             cls_attn = global_attention.mean(dim=1)[:,0,1:] 
-            # import_token_num = int(self.alpha * self.patch_embed.num_patches_list[0])
             import_token_num = math.ceil(self.alpha * self.patch_embed.num_patches_list[0])
             policy_index = torch.argsort(cls_attn, dim=1, descending=True)
             unimportan_index = policy_index[:, import_token_num:]
@@ -248,6 +247,70 @@ class CFVisionTransformer(nn.Module):
         results.append(self.head(x[:, 0]))
 
         return results
+
+    def forward_early_exit(self, xx, threshold):
+        alpha = 0.99 
+        global_attention = 0
+        target_index = [3,4,5,6,7,8,9,10,11]
+        # coarse stage
+        x = xx[0]
+        B = x.shape[0]
+        x = self.patch_embed(x)
+        cls_tokens = self.cls_token.expand(B, -1, -1)  # stole cls_tokens impl from Phil Wang, thanks
+        x = torch.cat((cls_tokens, x), dim=1)
+        x = x + self.pos_embed_list[0]
+        x = self.pos_drop(x)
+        embedding_x1 = x
+        for index,blk in enumerate(self.blocks):
+            x, atten = blk(x)
+            if index in target_index:
+                global_attention = alpha*global_attention + (1-alpha)*atten
+        x = self.norm(x)
+        self.first_stage_output = x
+        coarse_result = self.head(x[:, 0])
+        logits_temp = F.softmax(coarse_result, 1)
+        max_preds, _ = logits_temp.max(dim=1, keepdim=False)
+        no_exit = max_preds < threshold
+
+        # fine stage
+        x = xx[1][no_exit]
+        B = x.shape[0]
+        x = self.patch_embed(x)
+        cls_tokens = self.cls_token.expand(B, -1, -1)  # stole cls_tokens impl from Phil Wang, thanks
+        x = torch.cat((cls_tokens, x), dim=1)
+
+        # reuse
+        feature_temp = self.first_stage_output[:,1:,:][no_exit]
+        feature_temp = self.reuse_block(feature_temp)  
+        B, new_HW, C = feature_temp.shape
+        feature_temp = feature_temp.transpose(1, 2).reshape(B, C, int(np.sqrt(new_HW)), int(np.sqrt(new_HW)))
+        feature_temp = torch.nn.functional.interpolate(feature_temp, (14, 14), mode='nearest')
+        feature_temp = feature_temp.view(B, C, x.size(1) - 1).transpose(1, 2)
+        feature_temp = torch.cat((torch.zeros(B, 1, self.embed_dim).cuda(), feature_temp), dim=1)
+        
+        x = x+feature_temp      
+        embedding_x2 = x + self.pos_embed_list[1]
+        
+        cls_attn = global_attention[no_exit].mean(dim=1)[:,0,1:] # 不计算cls_token本身
+        import_token_num = math.ceil(self.alpha * self.patch_embed.num_patches_list[0])
+        policy_index = torch.argsort(cls_attn, dim=1, descending=True)
+        unimportan_index = policy_index[:, import_token_num:]
+        important_index = policy_index[:, :import_token_num]
+        unimportan_tokens = batch_index_select(embedding_x1[no_exit], unimportan_index+1)
+        important_index = get_index(important_index)
+        cls_index = torch.zeros((B,1)).cuda().long()
+        important_index = torch.cat((cls_index, important_index+1), dim=1)
+        important_tokens = batch_index_select(embedding_x2, important_index)
+        x = torch.cat((important_tokens, unimportan_tokens), dim=1)
+                
+        x = self.pos_drop(x)
+        for blk in self.blocks:
+            x, _ = blk(x)
+        x = self.norm(x)
+        fine_result = self.head(x[:, 0])
+        coarse_result[no_exit] = fine_result
+        
+        return coarse_result
 
 
 @register_model

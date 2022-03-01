@@ -7,12 +7,14 @@ from timm.data.auto_augment import invert
 torch.multiprocessing.set_sharing_strategy('file_system')
 
 from utils import *
+import timm
 
 import math
 import argparse
 import deit.models_deit 
 import lvvit.models
 from timm.models import create_model
+import numpy as np
 
 import pdb
 
@@ -45,7 +47,8 @@ parser.add_argument('--checkpoint_path', default='', type=str,
 parser.add_argument('--eval-mode', default=1, type=int,
                     help='mode 0 : inference without early exit\
                           mode 1 : infer the model on the validation set with various threshold\
-                          mode 2 : print the dynamic inference results')
+                          mode 2 : infer the model with one threshold and calculate the throughout\
+                          mode 3 : print the dynamic inference results in checkpoints')
 
 args = parser.parse_args()
 
@@ -56,13 +59,12 @@ def main():
     # load pretrained model
     checkpoint = torch.load(args.checkpoint_path)
     flops = checkpoint['flop']
-    if args.eval_mode == 2:
+    if args.eval_mode == 3:
         anytime_classification = checkpoint['anytime_classification']
         budgeted_batch_classification = checkpoint['budgeted_batch_classification']
         print('flops :', flops)
         print('anytime_classification :', anytime_classification)
         print('budgeted_batch_classification :', budgeted_batch_classification)
-        pdb.set_trace()
         return
 
     model = create_model(
@@ -85,9 +87,8 @@ def main():
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                         std=[0.229, 0.224, 0.225])
 
-    crop_pac = 0.875 
-    if "lvvit" in args.model:
-        crop_pac = 0.9
+    crop_pac_dict = {'cf_deit_small':0.875, 'cf_lvvit_small':0.9}
+    crop_pac = crop_pac_dict[args.model]
 
     val_loader = torch.utils.data.DataLoader(
         datasets.ImageFolder(valdir, transforms.Compose([
@@ -101,26 +102,23 @@ def main():
 
     model.load_state_dict(checkpoint['model'])
 
-    # if "deit" in args.model:
-    #     model.load_state_dict(checkpoint['model'])
-    # else:
-    #     model.load_state_dict(checkpoint['state_dict'])
-
+    torch.backends.cudnn.benchmark = False
     model.apply(lambda m: setattr(m,'informative_selection', True))
-    
 
+    if args.eval_mode == 0:    
+        print('generate logits on test samples...')
+        test_logits, test_targets, anytime_classification = generate_logits(model, val_loader, args.input_size_list)
+        print('flops :', flops)
+        print('anytime_classification :', anytime_classification)
+        return
+    
+    if args.eval_mode == 2:
+        print(f'dynamic inference with threshold {args.threshold}')
+        evaluate_throughput(val_loader, model,device, args.input_size_list, threshold=args.threshold)
+        return
     budgeted_batch_flops_list = []
     budgeted_batch_acc_list = []
 
-    print('generate logits on test samples...')
-    test_logits, test_targets, anytime_classification = generate_logits(model, val_loader, args.input_size_list)
-    print('flops :', flops)
-    print('anytime_classification :', anytime_classification)
-    # pdb.set_trace()
-
-    # pdb.set_trace()
-    if args.eval_mode == 0:
-        return
     for p in range(0, 100):
 
         print('inference: {}/100'.format(p))
@@ -136,7 +134,6 @@ def main():
     print('budgeted_batch_classification :', budgeted_batch_classification)
     checkpoint['anytime_classification'] = anytime_classification
     checkpoint['budgeted_batch_classification'] = budgeted_batch_classification
-    pdb.set_trace()
     torch.save(checkpoint, args.checkpoint_path)
 
 
@@ -211,6 +208,45 @@ def dynamic_evaluate(logits, targets, flops, T):
 
     return acc * 100.0 / n_sample, expected_flops.item()
 
+
+@torch.no_grad()
+def evaluate_throughput(data_loader, model, device,input_size_list, threshold):
+    metric_logger = MetricLogger(delimiter="  ")
+    header = 'Test:'
+    starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(enable_timing=True) 
+    timings = []
+
+    # switch to evaluation mode
+    model.eval()
+
+    for images, target in metric_logger.log_every(data_loader, 10, header):
+        target = target.to(device, non_blocking=True)
+        images = images.to(device, non_blocking=True)
+        images_list = []
+        for i in range(0,len(input_size_list)-1):
+            resized_img = F.interpolate(images, (input_size_list[i], input_size_list[i]), mode='bilinear', align_corners=True)
+            images_list.append(resized_img)  
+        images_list.append(images)  
+        starter.record()
+        result = model.forward_early_exit(images_list, threshold)
+        ender.record()
+        torch.cuda.synchronize()
+        curr_time = starter.elapsed_time(ender)
+        timings.append(curr_time)
+        batch_size = images.shape[0]
+
+        acc1, acc5 = timm.utils.accuracy(result, target, topk=(1, 5))
+        metric_logger.meters['acc1'].update(acc1.item(), n=batch_size)
+        metric_logger.meters['acc5'].update(acc5.item(), n=batch_size)
+    # gather the stats from all processes
+    metric_logger.synchronize_between_processes()
+    print('* Acc@1 {top1.global_avg:.3f} Acc@5 {top5.global_avg:.3f}'
+          .format(top1=metric_logger.acc1, top5=metric_logger.acc5))
+    sum_time = np.sum(timings)/1000
+    print('total sum:', sum_time)
+    throughput = 50000/sum_time
+    print('throughput:', throughput)
+    return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
 if __name__ == '__main__':
     main()

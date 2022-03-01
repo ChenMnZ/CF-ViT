@@ -117,13 +117,8 @@ class MultiResoPatchEmbed4_2(nn.Module):
 
         self.proj = nn.Conv2d(64, embed_dim, kernel_size=new_patch_size, stride=new_patch_size)
     def forward(self, x):
-        # pdb.set_trace()
         x = self.conv1(x)
 
-        # try:
-        #     x = self.conv1(x)
-        # except:
-        #     pdb.set_trace()
         x = self.bn1(x)
         x = self.relu(x)
 

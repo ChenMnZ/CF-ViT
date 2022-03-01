@@ -93,7 +93,6 @@ parser.add_argument('--input-size', default=None, nargs=3, type=int,
                     metavar='N N N', help='Input all image dimensions (d h w, e.g. --input-size 3 224 224), uses model default if empty')
 
 parser.add_argument('--coarse-stage-size', default=7, type=int, help='the length of coarse splitting')
-parser.add_argument('--threshold', default=0.7, type=float, help='the early exit threshold of coarse stage')
 
 
 parser.add_argument('--crop-pct', default=None, type=float,
@@ -292,9 +291,6 @@ parser.add_argument('--ground-truth', action='store_true', default=False,
 # Finetune
 parser.add_argument('--finetune', default='', type=str, metavar='PATH',
                     help='path to checkpoint file (default: none)')
-parser.add_argument('--eval', action='store_true', help='Perform evaluation only')
-parser.add_argument('--eval-throughput', action='store_true', help='Perform evaluation only')
-parser.add_argument('--eval-throughput-cpu', action='store_true', help='Perform evaluation only')
 
 
 def _parse_args():
@@ -619,20 +615,6 @@ def main():
     try:
         if args.finetune:
             validate(model, loader_eval, validate_loss_fn, args, amp_autocast=amp_autocast,input_size_list = args.input_size_list)
-
-        if args.eval:
-            model_ema.apply(lambda m: setattr(m,'informative_selection', True))
-            metrics = validate(model, loader_eval, validate_loss_fn, args, amp_autocast=amp_autocast,input_size_list = args.input_size_list)
-            # metrics = validate(model_ema.module, loader_eval, validate_loss_fn, args, amp_autocast=amp_autocast,input_size_list = args.input_size_list)
-            print(metrics)
-            return
-
-        if args.eval_throughput:
-            torch.backends.cudnn.benchmark = False
-            model_ema.apply(lambda m: setattr(m,'informative_selection', True))
-            print("threshold:", args.threshold)
-            validate_throughput(model_ema.module, loader_eval, validate_loss_fn, args, amp_autocast=amp_autocast, threshold=args.threshold)
-            return
         
         for epoch in range(start_epoch, num_epochs):   
             if epoch > 200:

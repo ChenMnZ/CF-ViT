@@ -39,6 +39,7 @@ def get_args_parser():
     parser.add_argument('--coarse-stage-size', default=7, type=int, help='the length of coarse splitting')
 
 
+
     parser.add_argument('--drop', type=float, default=0.0, metavar='PCT',
                         help='Dropout rate (default: 0.)')
     parser.add_argument('--drop-path', type=float, default=0.1, metavar='PCT',
@@ -374,6 +375,8 @@ def main(args):
         model.apply(lambda m: setattr(m,'informative_selection', True))
         test_stats = evaluate(data_loader_val, model, device, args.input_size_list)
         return
+
+
 
     print(f"Start training for {args.epochs} epochs")
     start_time = time.time()
