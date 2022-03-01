@@ -1,4 +1,7 @@
 
+# Coarse-to-Fine Vision Transformer
+This a Pytorch implementation of our paper 
+
 ## Pre-trained Models
 
 |Backbone|# of Coarse Seage|Checkpoints Links|Log Links|
@@ -78,4 +81,4 @@ python visualize.py --model cf_deit_small --resume  PATH_TO_CHECKPOINT --output_
 
 
 ## Acknowledgment
-Our code of LV-ViT is from [here](https://github.com/zihangJiang/TokenLabeling). Our code of DeiT is from [here](https://github.com/facebookresearch/deitzhe). The visualization code is modified from [Evo-ViT](https://github.com/YifanXu74/Evo-ViT). The dynamic inference with early-exit code is modified from [DVT](https://github.com/blackfeather-wang/Dynamic-Vision-Transformer/blob/main/README.md). Thanks 
+Our code of LV-ViT is from [here](https://github.com/zihangJiang/TokenLabeling). Our code of DeiT is from [here](https://github.com/facebookresearch/deitzhe). The visualization code is modified from [Evo-ViT](https://github.com/YifanXu74/Evo-ViT). The dynamic inference with early-exit code is modified from [DVT](https://github.com/blackfeather-wang/Dynamic-Vision-Transformer/blob/main/README.md). Thanks to these authors. 
