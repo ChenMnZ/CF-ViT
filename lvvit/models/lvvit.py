@@ -213,7 +213,7 @@ class CF_LV_ViT(nn.Module):
         if self.return_dense:
             x_aux = self.aux_head(x[:,1:])
             if not self.training:
-                results.append((x_cls+0.25*x_aux.max(1)[0]))
+                results.append((x_cls+0.25*x_aux.max(1)[0])/1.25)
             else:
                 # recover the mixed part
                 if self.mix_token and self.training:

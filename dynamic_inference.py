@@ -105,17 +105,20 @@ def main():
     torch.backends.cudnn.benchmark = False
     model.apply(lambda m: setattr(m,'informative_selection', True))
 
-    if args.eval_mode == 0:    
-        print('generate logits on test samples...')
-        test_logits, test_targets, anytime_classification = generate_logits(model, val_loader, args.input_size_list)
-        print('flops :', flops)
-        print('anytime_classification :', anytime_classification)
-        return
     
     if args.eval_mode == 2:
         print(f'dynamic inference with threshold {args.threshold}')
         evaluate_throughput(val_loader, model,device, args.input_size_list, threshold=args.threshold)
         return
+
+    print('generate logits on test samples...')
+    test_logits, test_targets, anytime_classification = generate_logits(model, val_loader, args.input_size_list)
+    print('flops :', flops)
+    print('anytime_classification :', anytime_classification)
+
+    if args.eval_mode == 0:    
+        return
+
     budgeted_batch_flops_list = []
     budgeted_batch_acc_list = []
 

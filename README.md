@@ -74,9 +74,11 @@ python -m torch.distributed.launch --nproc_per_node=4 main_lvvit.py PATH_TO_IMAG
 
 
 ## Visualization
+- Visualization of images correctly classified at coarse stage and fine stage.
 ```
 python visualize.py --model cf_deit_small --resume  PATH_TO_CHECKPOINT --output_dir PATH_TP_SAVE --data-path PATH_TO_IMAGENET --batch-size 64 
 ```
+- Other drawing code can be found in draw_picture.ipynb
 
 
 
