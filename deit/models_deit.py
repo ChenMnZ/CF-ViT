@@ -119,8 +119,7 @@ class CFVisionTransformer(nn.Module):
         self.informative_selection = False
         self.alpha = 0.5
         self.beta = 0.99
-        # self.target_index = [3,4,5,6,7,8,9,10,11]
-        self.target_index = [2,3,4,5,6,7,8,9,10,11]
+        self.target_index = [3,4,5,6,7,8,9,10,11]
         self.patch_h = img_size_list[1]//patch_size
         self.patch_w = img_size_list[1]//patch_size
 
