@@ -1,5 +1,5 @@
 
-# CF-ViT: A General Coarse-to-Fine Method for Vision Transformer (AAAI 2023)
+# CF-ViT: A General Coarse-to-Fine Method for Vision Transformer (AAAI 2023 Oral)
 This is Pytorch implementation of our paper "[CF-ViT: A General Coarse-to-Fine Method for Vision Transformer](https://arxiv.org/abs/2203.03821)".
 
 ## Pre-trained Models
