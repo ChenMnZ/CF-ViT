@@ -96,3 +96,13 @@ python visualize.py --model cf_deit_small --resume  PATH_TO_CHECKPOINT --output_
 
 ## Acknowledgment
 Our code of LV-ViT is from [here](https://github.com/zihangJiang/TokenLabeling). Our code of DeiT is from [here](https://github.com/facebookresearch/deitzhe). The visualization code is modified from [Evo-ViT](https://github.com/YifanXu74/Evo-ViT). The dynamic inference with early-exit code is modified from [DVT](https://github.com/blackfeather-wang/Dynamic-Vision-Transformer). Thanks to these authors. 
+
+## Citation
+```
+@inproceedings{CFViT,
+  title={CF-ViT: A General Coarse-to-Fine Method for Vision Transformer},
+  author={Mengzhao Chen and Mingbao Lin and Ke Li and Yunhang Shen and Yongjian Wu and Fei Chao and Rongrong Ji},
+  booktitle={Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume={37}
+}
+```
