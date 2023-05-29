@@ -92,11 +92,6 @@ python visualize.py --model cf_deit_small --resume  PATH_TO_CHECKPOINT --output_
 ```
 - Other drawing code can be found in draw_picture.ipynb
 
-
-
-## Acknowledgment
-Our code of LV-ViT is from [here](https://github.com/zihangJiang/TokenLabeling). Our code of DeiT is from [here](https://github.com/facebookresearch/deitzhe). The visualization code is modified from [Evo-ViT](https://github.com/YifanXu74/Evo-ViT). The dynamic inference with early-exit code is modified from [DVT](https://github.com/blackfeather-wang/Dynamic-Vision-Transformer). Thanks to these authors. 
-
 ## Citation
 ```
 @inproceedings{CFViT,
@@ -106,3 +101,8 @@ Our code of LV-ViT is from [here](https://github.com/zihangJiang/TokenLabeling).
   volume={37}
 }
 ```
+
+## Acknowledgment
+Our code of LV-ViT is from [here](https://github.com/zihangJiang/TokenLabeling). Our code of DeiT is from [here](https://github.com/facebookresearch/deitzhe). The visualization code is modified from [Evo-ViT](https://github.com/YifanXu74/Evo-ViT). The dynamic inference with early-exit code is modified from [DVT](https://github.com/blackfeather-wang/Dynamic-Vision-Transformer). Thanks to these authors. 
+
+
